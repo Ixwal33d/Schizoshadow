@@ -1,0 +1,1342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Schizo Shadows — A VR Descent Into a Fractured Mind</title>
+  <meta name="description" content="Schizo Shadows — a VR psychological horror escape room game built for Meta Quest 3. FYP-51, Air University Islamabad." />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;800&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400;1,600&family=JetBrains+Mono:wght@400;500&family=Manrope:wght@300;400;500;700&display=swap" rel="stylesheet" />
+
+  <style>
+    /* =========================================
+       CORE TOKENS
+       ========================================= */
+    :root {
+      --bg: #0a0608;
+      --bg-deep: #050304;
+      --surface: #120a0d;
+      --surface-2: #1a0e12;
+      --crimson: #8b1a1a;
+      --crimson-bright: #c41818;
+      --blood: #5a0000;
+      --bone: #e8dfd4;
+      --bone-dim: #a89c8e;
+      --bone-faint: #6b6259;
+      --shadow: #2a1518;
+      --rust: #6b2c1c;
+
+      --font-display: 'Cinzel', serif;
+      --font-italic: 'Cormorant Garamond', serif;
+      --font-body: 'Manrope', system-ui, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+
+      --max-w: 1200px;
+      --section-pad: clamp(5rem, 10vw, 9rem);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; -webkit-font-smoothing: antialiased; }
+
+    body {
+      background: var(--bg);
+      color: var(--bone);
+      font-family: var(--font-body);
+      font-weight: 300;
+      line-height: 1.65;
+      overflow-x: hidden;
+      position: relative;
+      min-height: 100vh;
+    }
+
+    /* =========================================
+       FILM GRAIN OVERLAY
+       ========================================= */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 9999;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.85'/%3E%3C/svg%3E");
+      opacity: 0.06;
+      mix-blend-mode: overlay;
+      animation: grain 0.6s steps(3) infinite;
+    }
+
+    @keyframes grain {
+      0%,100% { transform: translate(0,0); }
+      20% { transform: translate(-2%, 1%); }
+      40% { transform: translate(1%, -2%); }
+      60% { transform: translate(-1%, 2%); }
+      80% { transform: translate(2%, -1%); }
+    }
+
+    /* Vignette */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 9998;
+      background: radial-gradient(ellipse at center, transparent 30%, rgba(0,0,0,0.7) 100%);
+    }
+
+    /* =========================================
+       SELECTION + SCROLLBAR
+       ========================================= */
+    ::selection { background: var(--crimson); color: var(--bone); }
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { background: var(--bg-deep); }
+    ::-webkit-scrollbar-thumb { background: var(--crimson); }
+    ::-webkit-scrollbar-thumb:hover { background: var(--crimson-bright); }
+
+    /* =========================================
+       TYPOGRAPHY UTILITIES
+       ========================================= */
+    .eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      letter-spacing: 0.4em;
+      text-transform: uppercase;
+      color: var(--crimson-bright);
+      display: inline-flex;
+      align-items: center;
+      gap: 0.8rem;
+    }
+    .eyebrow::before {
+      content: '';
+      width: 30px;
+      height: 1px;
+      background: var(--crimson-bright);
+    }
+
+    h2.section-title {
+      font-family: var(--font-display);
+      font-weight: 600;
+      font-size: clamp(2.2rem, 5vw, 3.8rem);
+      letter-spacing: 0.05em;
+      line-height: 1.1;
+      margin-top: 1rem;
+      text-transform: uppercase;
+    }
+
+    .italic-accent {
+      font-family: var(--font-italic);
+      font-style: italic;
+      font-weight: 400;
+      color: var(--bone-dim);
+    }
+
+    .container {
+      max-width: var(--max-w);
+      margin: 0 auto;
+      padding: 0 clamp(1.5rem, 4vw, 3rem);
+    }
+
+    section {
+      padding: var(--section-pad) 0;
+      position: relative;
+    }
+
+    /* Section divider */
+    .divider {
+      width: 1px;
+      height: 80px;
+      background: linear-gradient(to bottom, transparent, var(--crimson), transparent);
+      margin: 0 auto;
+      opacity: 0.6;
+    }
+
+    /* =========================================
+       NAVIGATION
+       ========================================= */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      padding: 1.4rem 0;
+      background: rgba(10, 6, 8, 0.6);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(139, 26, 26, 0.15);
+      transition: padding 0.3s ease;
+    }
+
+    nav.scrolled { padding: 0.9rem 0; background: rgba(10, 6, 8, 0.92); }
+
+    .nav-inner {
+      max-width: var(--max-w);
+      margin: 0 auto;
+      padding: 0 clamp(1.5rem, 4vw, 3rem);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo {
+      font-family: var(--font-display);
+      font-weight: 800;
+      font-size: 1.1rem;
+      letter-spacing: 0.3em;
+      color: var(--bone);
+      text-decoration: none;
+      position: relative;
+    }
+    .logo span { color: var(--crimson-bright); }
+
+    .nav-links {
+      display: flex;
+      gap: 2.5rem;
+      list-style: none;
+    }
+    .nav-links a {
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--bone-dim);
+      text-decoration: none;
+      transition: color 0.3s ease;
+      position: relative;
+    }
+    .nav-links a:hover { color: var(--bone); }
+    .nav-links a::after {
+      content: '';
+      position: absolute;
+      bottom: -6px;
+      left: 0;
+      width: 0;
+      height: 1px;
+      background: var(--crimson-bright);
+      transition: width 0.3s ease;
+    }
+    .nav-links a:hover::after { width: 100%; }
+
+    .nav-mobile-toggle {
+      display: none;
+      background: none;
+      border: none;
+      color: var(--bone);
+      font-size: 1.5rem;
+      cursor: pointer;
+    }
+
+    @media (max-width: 768px) {
+      .nav-links { display: none; }
+      .nav-mobile-toggle { display: block; }
+    }
+
+    /* =========================================
+       HERO
+       ========================================= */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 8rem 1.5rem 4rem;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero-bg {
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse at 20% 30%, rgba(139,26,26,0.15), transparent 50%),
+        radial-gradient(ellipse at 80% 70%, rgba(90,0,0,0.12), transparent 50%),
+        linear-gradient(to bottom, var(--bg-deep), var(--bg));
+      z-index: -1;
+    }
+
+    .hero-bg::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        repeating-linear-gradient(
+          0deg,
+          transparent 0,
+          transparent 3px,
+          rgba(139,26,26,0.025) 3px,
+          rgba(139,26,26,0.025) 4px
+        );
+      animation: scanlines 8s linear infinite;
+    }
+
+    @keyframes scanlines {
+      0% { transform: translateY(0); }
+      100% { transform: translateY(20px); }
+    }
+
+    .hero-meta {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      letter-spacing: 0.4em;
+      color: var(--crimson);
+      text-transform: uppercase;
+      margin-bottom: 2.5rem;
+      display: flex;
+      gap: 1.5rem;
+      align-items: center;
+      opacity: 0;
+      animation: fadeIn 1.2s 0.3s forwards;
+    }
+    .hero-meta span { color: var(--bone-faint); }
+
+    .hero-title {
+      font-family: var(--font-display);
+      font-weight: 800;
+      font-size: clamp(3rem, 11vw, 8.5rem);
+      letter-spacing: 0.04em;
+      line-height: 0.95;
+      text-transform: uppercase;
+      color: var(--bone);
+      position: relative;
+      display: inline-block;
+      opacity: 0;
+      animation: fadeIn 1.4s 0.6s forwards;
+    }
+
+    /* Glitch effect */
+    .glitch {
+      position: relative;
+    }
+    .glitch::before,
+    .glitch::after {
+      content: attr(data-text);
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      pointer-events: none;
+    }
+    .glitch::before {
+      color: var(--crimson-bright);
+      animation: glitch-1 4.5s infinite steps(1) alternate-reverse;
+      mix-blend-mode: screen;
+    }
+    .glitch::after {
+      color: rgba(232, 223, 212, 0.7);
+      animation: glitch-2 3.2s infinite steps(1) alternate-reverse;
+      mix-blend-mode: screen;
+    }
+
+    @keyframes glitch-1 {
+      0%, 91%, 100% { transform: translate(0); clip-path: inset(0 0 0 0); }
+      92% { transform: translate(-3px, 1px); clip-path: inset(20% 0 60% 0); }
+      94% { transform: translate(2px, -2px); clip-path: inset(70% 0 10% 0); }
+      96% { transform: translate(-1px, 2px); clip-path: inset(40% 0 30% 0); }
+      98% { transform: translate(0); clip-path: inset(0 0 0 0); }
+    }
+    @keyframes glitch-2 {
+      0%, 88%, 100% { transform: translate(0); clip-path: inset(0 0 0 0); }
+      89% { transform: translate(2px, -1px); clip-path: inset(50% 0 30% 0); }
+      91% { transform: translate(-2px, 1px); clip-path: inset(15% 0 75% 0); }
+      93% { transform: translate(1px, 1px); clip-path: inset(60% 0 20% 0); }
+      95% { transform: translate(0); clip-path: inset(0 0 0 0); }
+    }
+
+    .hero-tagline {
+      font-family: var(--font-italic);
+      font-style: italic;
+      font-weight: 400;
+      font-size: clamp(1.2rem, 2.4vw, 1.8rem);
+      color: var(--bone-dim);
+      margin-top: 2rem;
+      letter-spacing: 0.02em;
+      max-width: 600px;
+      opacity: 0;
+      animation: fadeIn 1.4s 1s forwards;
+    }
+
+    .hero-cta {
+      display: flex;
+      gap: 1.5rem;
+      margin-top: 3.5rem;
+      flex-wrap: wrap;
+      justify-content: center;
+      opacity: 0;
+      animation: fadeIn 1.4s 1.3s forwards;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.8rem;
+      padding: 1rem 2.2rem;
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      text-decoration: none;
+      cursor: pointer;
+      border: 1px solid var(--crimson);
+      background: transparent;
+      color: var(--bone);
+      transition: all 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: var(--crimson);
+      transform: translateX(-101%);
+      transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+      z-index: -1;
+    }
+    .btn:hover::before { transform: translateX(0); }
+    .btn:hover { border-color: var(--crimson-bright); }
+
+    .btn-primary {
+      background: var(--crimson);
+      border-color: var(--crimson);
+    }
+    .btn-primary::before { background: var(--crimson-bright); }
+
+    .btn-arrow {
+      display: inline-block;
+      transition: transform 0.3s ease;
+    }
+    .btn:hover .btn-arrow { transform: translateX(4px); }
+
+    .hero-scroll {
+      position: absolute;
+      bottom: 3rem;
+      left: 50%;
+      transform: translateX(-50%);
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--bone-faint);
+      opacity: 0;
+      animation: fadeIn 1.4s 1.8s forwards;
+    }
+    .hero-scroll::after {
+      content: '';
+      display: block;
+      width: 1px;
+      height: 30px;
+      background: var(--crimson);
+      margin: 1rem auto 0;
+      animation: scrollPulse 2s ease-in-out infinite;
+    }
+    @keyframes scrollPulse {
+      0%, 100% { transform: scaleY(0.4); opacity: 0.5; }
+      50% { transform: scaleY(1); opacity: 1; }
+    }
+
+    @keyframes fadeIn {
+      to { opacity: 1; }
+    }
+
+    /* =========================================
+       OVERVIEW SECTION
+       ========================================= */
+    .overview {
+      background: var(--bg);
+      position: relative;
+    }
+
+    .overview-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 5rem;
+      align-items: start;
+    }
+
+    @media (max-width: 900px) {
+      .overview-grid { grid-template-columns: 1fr; gap: 3rem; }
+    }
+
+    .overview-text p {
+      font-size: 1.05rem;
+      line-height: 1.85;
+      color: var(--bone-dim);
+      margin-bottom: 1.5rem;
+    }
+    .overview-text p strong {
+      color: var(--bone);
+      font-weight: 400;
+    }
+
+    .overview-quote {
+      font-family: var(--font-italic);
+      font-style: italic;
+      font-size: clamp(1.4rem, 2.5vw, 2rem);
+      color: var(--bone);
+      line-height: 1.4;
+      padding-left: 2rem;
+      border-left: 2px solid var(--crimson);
+      position: sticky;
+      top: 8rem;
+    }
+    .overview-quote::before {
+      content: '"';
+      font-size: 5rem;
+      color: var(--crimson);
+      line-height: 0;
+      position: relative;
+      top: 0.3em;
+      margin-right: 0.2em;
+      font-family: var(--font-display);
+    }
+    .overview-quote cite {
+      display: block;
+      margin-top: 1.5rem;
+      font-family: var(--font-mono);
+      font-style: normal;
+      font-size: 0.75rem;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--crimson-bright);
+    }
+
+    .tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.6rem;
+      margin-top: 2.5rem;
+    }
+    .tag {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      padding: 0.5rem 0.9rem;
+      border: 1px solid rgba(168, 156, 142, 0.2);
+      color: var(--bone-dim);
+    }
+
+    /* =========================================
+       TRAILER
+       ========================================= */
+    .trailer {
+      background: var(--bg-deep);
+      text-align: center;
+    }
+
+    .trailer-frame {
+      max-width: 1000px;
+      margin: 3rem auto 0;
+      position: relative;
+      border: 1px solid rgba(139, 26, 26, 0.3);
+      background: var(--bg-deep);
+      box-shadow: 0 30px 80px rgba(0,0,0,0.5), 0 0 60px rgba(139,26,26,0.1);
+    }
+
+    .trailer-frame::before {
+      content: '';
+      position: absolute;
+      inset: -1px;
+      border: 1px solid var(--crimson);
+      opacity: 0;
+      transition: opacity 0.4s ease;
+      pointer-events: none;
+    }
+    .trailer-frame:hover::before { opacity: 1; }
+
+    .trailer-aspect {
+      aspect-ratio: 16 / 9;
+      position: relative;
+    }
+    .trailer-aspect iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+      display: block;
+    }
+
+    .trailer-corners span {
+      position: absolute;
+      width: 16px;
+      height: 16px;
+      border: 1px solid var(--crimson);
+    }
+    .trailer-corners span:nth-child(1) { top: -1px; left: -1px; border-right: none; border-bottom: none; }
+    .trailer-corners span:nth-child(2) { top: -1px; right: -1px; border-left: none; border-bottom: none; }
+    .trailer-corners span:nth-child(3) { bottom: -1px; left: -1px; border-right: none; border-top: none; }
+    .trailer-corners span:nth-child(4) { bottom: -1px; right: -1px; border-left: none; border-top: none; }
+
+    /* =========================================
+       FEATURES
+       ========================================= */
+    .features {
+      background: var(--bg);
+    }
+
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1px;
+      margin-top: 4rem;
+      background: rgba(139, 26, 26, 0.2);
+      border: 1px solid rgba(139, 26, 26, 0.2);
+    }
+
+    .feature-card {
+      background: var(--bg);
+      padding: 2.5rem 2rem;
+      transition: all 0.4s ease;
+      position: relative;
+      cursor: default;
+    }
+    .feature-card:hover {
+      background: var(--surface);
+      transform: translateY(-2px);
+    }
+    .feature-card:hover .feature-num { color: var(--crimson-bright); }
+
+    .feature-num {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      letter-spacing: 0.3em;
+      color: var(--bone-faint);
+      transition: color 0.3s ease;
+    }
+
+    .feature-card h3 {
+      font-family: var(--font-display);
+      font-weight: 600;
+      font-size: 1.3rem;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      margin: 1.5rem 0 1rem;
+      color: var(--bone);
+    }
+
+    .feature-card p {
+      color: var(--bone-dim);
+      font-size: 0.95rem;
+      line-height: 1.7;
+    }
+
+    /* =========================================
+       SCREENSHOTS
+       ========================================= */
+    .screenshots {
+      background: var(--bg-deep);
+    }
+
+    .screenshot-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.5rem;
+      margin-top: 4rem;
+    }
+
+    .screenshot {
+      aspect-ratio: 16 / 10;
+      background: linear-gradient(135deg, var(--surface), var(--surface-2));
+      border: 1px solid rgba(139, 26, 26, 0.2);
+      position: relative;
+      overflow: hidden;
+      cursor: pointer;
+      transition: all 0.4s ease;
+    }
+    .screenshot:hover {
+      transform: scale(1.02);
+      border-color: var(--crimson);
+    }
+    .screenshot:hover::after { opacity: 1; }
+
+    .screenshot img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    /* Placeholder styling for empty screenshots */
+    .screenshot-placeholder {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 0.5rem;
+      background:
+        repeating-linear-gradient(
+          45deg,
+          var(--surface) 0,
+          var(--surface) 10px,
+          var(--surface-2) 10px,
+          var(--surface-2) 20px
+        );
+    }
+    .screenshot-placeholder .ph-num {
+      font-family: var(--font-mono);
+      font-size: 2.5rem;
+      color: var(--crimson);
+      font-weight: 500;
+    }
+    .screenshot-placeholder .ph-label {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--bone-faint);
+    }
+
+    .screenshot::after {
+      content: 'EXPAND';
+      position: absolute;
+      bottom: 1rem;
+      right: 1rem;
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.3em;
+      color: var(--crimson-bright);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    /* =========================================
+       DOWNLOAD
+       ========================================= */
+    .download {
+      background: var(--bg);
+    }
+
+    .download-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+      margin-top: 4rem;
+    }
+    @media (max-width: 800px) {
+      .download-grid { grid-template-columns: 1fr; }
+    }
+
+    .download-card {
+      background: var(--surface);
+      padding: 3rem 2.5rem;
+      border: 1px solid rgba(139, 26, 26, 0.25);
+      position: relative;
+      transition: all 0.4s ease;
+    }
+    .download-card:hover {
+      border-color: var(--crimson);
+      background: var(--surface-2);
+    }
+
+    .download-card .platform {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      letter-spacing: 0.4em;
+      color: var(--crimson-bright);
+      text-transform: uppercase;
+    }
+
+    .download-card h3 {
+      font-family: var(--font-display);
+      font-weight: 600;
+      font-size: 1.8rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      margin: 1rem 0 1.5rem;
+      color: var(--bone);
+    }
+
+    .download-card .desc {
+      color: var(--bone-dim);
+      margin-bottom: 2rem;
+      font-size: 0.95rem;
+      line-height: 1.7;
+    }
+
+    .requirements {
+      list-style: none;
+      margin-bottom: 2.5rem;
+      border-top: 1px solid rgba(139, 26, 26, 0.15);
+      padding-top: 1.5rem;
+    }
+    .requirements li {
+      display: flex;
+      justify-content: space-between;
+      padding: 0.6rem 0;
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      border-bottom: 1px solid rgba(139, 26, 26, 0.08);
+    }
+    .requirements li:last-child { border-bottom: none; }
+    .requirements .label {
+      color: var(--bone-faint);
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+    }
+    .requirements .value { color: var(--bone); }
+
+    .download-note {
+      margin-top: 3rem;
+      padding: 1.5rem;
+      background: var(--bg-deep);
+      border-left: 2px solid var(--crimson);
+      font-family: var(--font-italic);
+      font-style: italic;
+      color: var(--bone-dim);
+      font-size: 0.95rem;
+      line-height: 1.6;
+    }
+
+    /* =========================================
+       TEAM
+       ========================================= */
+    .team {
+      background: var(--bg-deep);
+    }
+
+    .team-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1.5rem;
+      margin-top: 4rem;
+    }
+
+    .team-card {
+      background: var(--surface);
+      padding: 2.5rem 2rem;
+      border: 1px solid rgba(139, 26, 26, 0.15);
+      transition: all 0.4s ease;
+      position: relative;
+    }
+    .team-card:hover {
+      border-color: var(--crimson);
+      transform: translateY(-3px);
+    }
+
+    .team-card .id {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      letter-spacing: 0.3em;
+      color: var(--crimson-bright);
+      margin-bottom: 1rem;
+    }
+
+    .team-card h4 {
+      font-family: var(--font-display);
+      font-weight: 600;
+      font-size: 1.3rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--bone);
+      margin-bottom: 0.5rem;
+    }
+
+    .team-card .role {
+      font-family: var(--font-italic);
+      font-style: italic;
+      color: var(--bone-dim);
+      margin-bottom: 1.5rem;
+      font-size: 1rem;
+    }
+
+    .team-card a.email {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      color: var(--bone-dim);
+      text-decoration: none;
+      transition: color 0.3s ease;
+      word-break: break-all;
+    }
+    .team-card a.email:hover { color: var(--crimson-bright); }
+
+    .supervisors {
+      margin-top: 4rem;
+      padding-top: 3rem;
+      border-top: 1px solid rgba(139, 26, 26, 0.15);
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+    }
+    @media (max-width: 700px) { .supervisors { grid-template-columns: 1fr; } }
+
+    .supervisor {
+      text-align: center;
+    }
+    .supervisor .label {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      letter-spacing: 0.4em;
+      text-transform: uppercase;
+      color: var(--crimson-bright);
+      margin-bottom: 0.8rem;
+    }
+    .supervisor .name {
+      font-family: var(--font-display);
+      font-size: 1.2rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--bone);
+    }
+    .supervisor .desig {
+      font-family: var(--font-italic);
+      font-style: italic;
+      color: var(--bone-dim);
+      margin-top: 0.4rem;
+      font-size: 0.95rem;
+    }
+
+    /* =========================================
+       FOOTER
+       ========================================= */
+    footer {
+      background: var(--bg-deep);
+      border-top: 1px solid rgba(139, 26, 26, 0.2);
+      padding: 4rem 0 2.5rem;
+      text-align: center;
+    }
+
+    .footer-title {
+      font-family: var(--font-display);
+      font-weight: 800;
+      font-size: 1.5rem;
+      letter-spacing: 0.3em;
+      color: var(--bone);
+      margin-bottom: 1rem;
+    }
+    .footer-title span { color: var(--crimson-bright); }
+
+    .footer-meta {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--bone-faint);
+      margin-bottom: 0.5rem;
+    }
+
+    .footer-copy {
+      margin-top: 2.5rem;
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      letter-spacing: 0.2em;
+      color: var(--bone-faint);
+    }
+
+    /* =========================================
+       SCROLL REVEAL
+       ========================================= */
+    .reveal {
+      opacity: 0;
+      transform: translateY(30px);
+      transition: opacity 0.9s ease, transform 0.9s ease;
+    }
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .reveal.delay-1 { transition-delay: 0.1s; }
+    .reveal.delay-2 { transition-delay: 0.25s; }
+    .reveal.delay-3 { transition-delay: 0.4s; }
+
+    /* =========================================
+       RESPONSIVE
+       ========================================= */
+    @media (max-width: 600px) {
+      .hero-meta { flex-direction: column; gap: 0.5rem; }
+      .hero-cta { flex-direction: column; width: 100%; max-width: 300px; }
+      .btn { justify-content: center; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ============= NAV ============= -->
+  <nav id="nav">
+    <div class="nav-inner">
+      <a href="#" class="logo">SCHIZO<span>•</span>SHADOWS</a>
+      <ul class="nav-links">
+        <li><a href="#overview">Overview</a></li>
+        <li><a href="#trailer">Trailer</a></li>
+        <li><a href="#features">Features</a></li>
+        <li><a href="#screenshots">Gallery</a></li>
+        <li><a href="#download">Download</a></li>
+        <li><a href="#team">Team</a></li>
+      </ul>
+      <button class="nav-mobile-toggle" onclick="document.querySelector('.nav-links').style.display = document.querySelector('.nav-links').style.display === 'flex' ? 'none' : 'flex'">☰</button>
+    </div>
+  </nav>
+
+  <!-- ============= HERO ============= -->
+  <section class="hero">
+    <div class="hero-bg"></div>
+    <div class="hero-meta">
+      <span>FYP-51</span>
+      <span>·</span>
+      <span>VR PSYCHOLOGICAL HORROR</span>
+      <span>·</span>
+      <span>META QUEST 3</span>
+    </div>
+    <h1 class="hero-title glitch" data-text="SCHIZO SHADOWS">SCHIZO SHADOWS</h1>
+    <p class="hero-tagline">A VR Descent Into a Fractured Mind.</p>
+    <div class="hero-cta">
+      <a href="#trailer" class="btn btn-primary">Watch Gameplay <span class="btn-arrow">→</span></a>
+      <a href="#download" class="btn">Download Game <span class="btn-arrow">↓</span></a>
+    </div>
+    <div class="hero-scroll">Scroll</div>
+  </section>
+
+  <!-- ============= OVERVIEW ============= -->
+  <section id="overview" class="overview">
+    <div class="container">
+      <div class="overview-grid">
+        <div class="reveal">
+          <span class="eyebrow">Chapter I — The Premise</span>
+          <h2 class="section-title">A House That<br/>Remembers Wrong</h2>
+          <div class="tags">
+            <span class="tag">VR Horror</span>
+            <span class="tag">Escape Room</span>
+            <span class="tag">Narrative</span>
+            <span class="tag">Single Player</span>
+            <span class="tag">Meta Quest 3</span>
+          </div>
+        </div>
+        <div class="overview-text reveal delay-1">
+          <p>You are <strong>Kamil</strong> — a young man trapped in the warped reflection of his childhood home, convinced his mother performed dark rituals that took his brother <strong>Faheem</strong>'s life.</p>
+          <p>Hallways stretch. Objects shift. Faheem's ghost lingers in every reflection, every whisper. As your sanity drains, the house grows hungrier, and the puzzles grow stranger.</p>
+          <p>But the horrors here aren't waiting in the dark. They're waiting <strong>inside you</strong>. <em class="italic-accent">Schizo Shadows</em> is a psychological horror escape room built for VR — where the real twist isn't the monster. It's the diagnosis.</p>
+          <div class="overview-quote">
+            Some shadows are memories.<br/>
+            Some memories never happened.
+            <cite>— Kamil</cite>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ============= TRAILER ============= -->
+  <section id="trailer" class="trailer">
+    <div class="container">
+      <div class="reveal" style="text-align: center;">
+        <span class="eyebrow">Chapter II — Watch</span>
+        <h2 class="section-title">Gameplay Footage</h2>
+        <p class="italic-accent" style="margin-top: 1rem; font-size: 1.1rem;">Best viewed in the dark. Headphones recommended.</p>
+      </div>
+
+      <!--
+        =========================================================
+        REPLACE GOOGLE DRIVE LINK BELOW
+        =========================================================
+        1. Open your video on Google Drive
+        2. Click "Share" → set to "Anyone with the link"
+        3. Copy the link — it looks like:
+           https://drive.google.com/file/d/FILE_ID_HERE/view?usp=sharing
+        4. Replace YOUR_FILE_ID below with FILE_ID_HERE
+        =========================================================
+      -->
+      <div class="trailer-frame reveal delay-1">
+        <div class="trailer-corners">
+          <span></span><span></span><span></span><span></span>
+        </div>
+        <div class="trailer-aspect">
+          <iframe
+            src="https://drive.google.com/file/d/YOUR_FILE_ID/preview"
+            allow="autoplay"
+            allowfullscreen
+            title="Schizo Shadows Gameplay">
+          </iframe>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ============= FEATURES ============= -->
+  <section id="features" class="features">
+    <div class="container">
+      <div class="reveal" style="text-align: center;">
+        <span class="eyebrow">Chapter III — Mechanics</span>
+        <h2 class="section-title">The Anatomy of Fear</h2>
+      </div>
+
+      <div class="feature-grid">
+
+        <div class="feature-card reveal">
+          <div class="feature-num">/ 01</div>
+          <h3>Sanity System</h3>
+          <p>A dynamic mental state that warps the environment in real time. The lower your sanity, the more the house bends — walls breathe, doors relocate, faces appear in the walls.</p>
+        </div>
+
+        <div class="feature-card reveal delay-1">
+          <div class="feature-num">/ 02</div>
+          <h3>VR Hallucinations</h3>
+          <p>Faheem's ghost manifests through ScriptedGhostWalk patterns and SanityRevealedObjects — apparitions visible only when sanity dips below thresholds. Stare too long and pay the price.</p>
+        </div>
+
+        <div class="feature-card reveal delay-2">
+          <div class="feature-num">/ 03</div>
+          <h3>Environmental Puzzles</h3>
+          <p>Ghost Footsteps. Shadow Handprint Trails. Pill Bottle Sorting. Every puzzle is built native-VR — designed for hand presence on Meta Quest 3 controllers, not adapted from flatscreen logic.</p>
+        </div>
+
+        <div class="feature-card reveal">
+          <div class="feature-num">/ 04</div>
+          <h3>Spatial Audio</h3>
+          <p>FMOD-driven 3D sound design. Whispers come from behind you. Breathing tightens as sanity drops. The audio engineering carries the dread when the visuals go quiet.</p>
+        </div>
+
+        <div class="feature-card reveal delay-1">
+          <div class="feature-num">/ 05</div>
+          <h3>Branching Endings</h3>
+          <p>Reality Acceptance. Denial. Neutral. The conclusion you reach depends on which puzzles you solve, how you treat the hallucinations, and whether Kamil ever trusts what he sees.</p>
+        </div>
+
+        <div class="feature-card reveal delay-2">
+          <div class="feature-num">/ 06</div>
+          <h3>Built for Quest 3</h3>
+          <p>Unity 2022.3 LTS, XR Interaction Toolkit, optimized for standalone Meta Quest 3. No PC required. No tether. Step into Kamil's house, in his body, in your living room.</p>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ============= SCREENSHOTS ============= -->
+  <section id="screenshots" class="screenshots">
+    <div class="container">
+      <div class="reveal" style="text-align: center;">
+        <span class="eyebrow">Chapter IV — Gallery</span>
+        <h2 class="section-title">From the Other Side</h2>
+        <p class="italic-accent" style="margin-top: 1rem; font-size: 1.1rem;">Captured in-engine. Unaltered.</p>
+      </div>
+
+      <!--
+        =========================================================
+        REPLACE SCREENSHOT PLACEHOLDERS
+        =========================================================
+        To add a real screenshot:
+        1. Save your image (e.g. screenshot1.jpg) in the same folder
+           as this HTML file.
+        2. In the card below, replace the entire .screenshot-placeholder
+           div with:
+              <img src="screenshot1.jpg" alt="Description" />
+        3. Repeat for each card.
+        =========================================================
+      -->
+      <div class="screenshot-grid">
+        <div class="screenshot reveal">
+          <div class="screenshot-placeholder">
+            <div class="ph-num">01</div>
+            <div class="ph-label">Replace with screenshot</div>
+          </div>
+        </div>
+        <div class="screenshot reveal delay-1">
+          <div class="screenshot-placeholder">
+            <div class="ph-num">02</div>
+            <div class="ph-label">Replace with screenshot</div>
+          </div>
+        </div>
+        <div class="screenshot reveal delay-2">
+          <div class="screenshot-placeholder">
+            <div class="ph-num">03</div>
+            <div class="ph-label">Replace with screenshot</div>
+          </div>
+        </div>
+        <div class="screenshot reveal">
+          <div class="screenshot-placeholder">
+            <div class="ph-num">04</div>
+            <div class="ph-label">Replace with screenshot</div>
+          </div>
+        </div>
+        <div class="screenshot reveal delay-1">
+          <div class="screenshot-placeholder">
+            <div class="ph-num">05</div>
+            <div class="ph-label">Replace with screenshot</div>
+          </div>
+        </div>
+        <div class="screenshot reveal delay-2">
+          <div class="screenshot-placeholder">
+            <div class="ph-num">06</div>
+            <div class="ph-label">Replace with screenshot</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ============= DOWNLOAD ============= -->
+  <section id="download" class="download">
+    <div class="container">
+      <div class="reveal" style="text-align: center;">
+        <span class="eyebrow">Chapter V — Acquire</span>
+        <h2 class="section-title">Enter the House</h2>
+        <p class="italic-accent" style="margin-top: 1rem; font-size: 1.1rem;">Choose your platform.<br/>Both build the same horror.</p>
+      </div>
+
+      <!--
+        =========================================================
+        REPLACE DOWNLOAD LINKS
+        =========================================================
+        The href="#" placeholders below should point to your
+        actual download URLs after you upload to GitHub Releases.
+        Look for the comments [REPLACE DOWNLOAD LINK] below.
+        See the hosting guide in the message after this code.
+        =========================================================
+      -->
+
+      <div class="download-grid">
+
+        <div class="download-card reveal">
+          <div class="platform">/ Platform 01</div>
+          <h3>PC VR (.exe)</h3>
+          <p class="desc">Tethered VR via Meta Quest Link or any OpenXR-compatible headset. Full visual fidelity, ultra textures, smoothest performance.</p>
+          <ul class="requirements">
+            <li><span class="label">OS</span> <span class="value">Windows 10 / 11</span></li>
+            <li><span class="label">CPU</span> <span class="value">Intel i5-10400 / Ryzen 5 3600+</span></li>
+            <li><span class="label">GPU</span> <span class="value">RTX 2060 / RX 5700+</span></li>
+            <li><span class="label">RAM</span> <span class="value">16 GB</span></li>
+            <li><span class="label">Headset</span> <span class="value">Quest 3 + Link / SteamVR</span></li>
+            <li><span class="label">Size</span> <span class="value">~ 2.1 GB</span></li>
+          </ul>
+          <!-- [REPLACE DOWNLOAD LINK] -->
+          <a href="#" class="btn btn-primary" download>Download for PC <span class="btn-arrow">↓</span></a>
+        </div>
+
+        <div class="download-card reveal delay-1">
+          <div class="platform">/ Platform 02</div>
+          <h3>Meta Quest 3 (.apk)</h3>
+          <p class="desc">Standalone build. No PC. No wires. Sideload via SideQuest or ADB and step directly into Kamil's house from anywhere.</p>
+          <ul class="requirements">
+            <li><span class="label">Device</span> <span class="value">Meta Quest 3 / 3S</span></li>
+            <li><span class="label">OS</span> <span class="value">Horizon OS v60+</span></li>
+            <li><span class="label">Storage</span> <span class="value">2 GB free</span></li>
+            <li><span class="label">Method</span> <span class="value">SideQuest / ADB Sideload</span></li>
+            <li><span class="label">Dev Mode</span> <span class="value">Required</span></li>
+            <li><span class="label">Size</span> <span class="value">~ 1.4 GB</span></li>
+          </ul>
+          <!-- [REPLACE DOWNLOAD LINK] -->
+          <a href="#" class="btn btn-primary" download>Download APK <span class="btn-arrow">↓</span></a>
+        </div>
+
+      </div>
+
+      <div class="download-note reveal delay-2">
+        <strong style="color: var(--bone); font-weight: 400;">Note on sideloading:</strong> The Quest 3 build is not on the official Meta Store. You'll need to enable Developer Mode on your headset and install via SideQuest (free). Full instructions are provided in the README inside the download.
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ============= TEAM ============= -->
+  <section id="team" class="team">
+    <div class="container">
+      <div class="reveal" style="text-align: center;">
+        <span class="eyebrow">Chapter VI — Architects</span>
+        <h2 class="section-title">The Three Who Built This</h2>
+        <p class="italic-accent" style="margin-top: 1rem; font-size: 1.1rem;">FYP-51 · Department of Computer Games Development · Session 2022–26</p>
+      </div>
+
+      <!--
+        =========================================================
+        TEAM EMAILS — REPLACE WITH REAL ADDRESSES
+        =========================================================
+        Update the mailto: links and visible email text below
+        with each team member's actual email.
+        =========================================================
+      -->
+
+      <div class="team-grid">
+
+        <div class="team-card reveal">
+          <div class="id">/ 222565</div>
+          <h4>Waleed Aslam</h4>
+          <div class="role">Designer &amp; Developer</div>
+          <a href="mailto:222565@students.au.edu.pk" class="email">✉ 222565@students.au.edu.pk</a>
+        </div>
+
+        <div class="team-card reveal delay-1">
+          <div class="id">/ 220479</div>
+          <h4>Momina Shams</h4>
+          <div class="role">3D Asset Designer</div>
+          <a href="mailto:220479@students.au.edu.pk" class="email">✉ 220479@students.au.edu.pk</a>
+        </div>
+
+        <div class="team-card reveal delay-2">
+          <div class="id">/ 220537</div>
+          <h4>Muqadas Sajid</h4>
+          <div class="role">UI/UX Designer</div>
+          <a href="mailto:220537@students.au.edu.pk" class="email">✉ 220537@students.au.edu.pk</a>
+        </div>
+
+      </div>
+
+      <div class="supervisors">
+        <div class="supervisor reveal">
+          <div class="label">Supervisor</div>
+          <div class="name">Mr. Saqib Raza</div>
+          <div class="desig">Game Developer &amp; Lecturer</div>
+        </div>
+        <div class="supervisor reveal delay-1">
+          <div class="label">Industrial Supervisor</div>
+          <div class="name">Mr. Adeel Hassan</div>
+          <div class="desig">Manager for Gaming Products</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============= FOOTER ============= -->
+  <footer>
+    <div class="container">
+      <div class="footer-title">SCHIZO<span>•</span>SHADOWS</div>
+      <div class="footer-meta">FYP-51 · Air University Islamabad</div>
+      <div class="footer-meta">Faculty of Computing &amp; AI · Department of Computer Games Development</div>
+      <div class="footer-copy">© 2025–2026 Schizo Shadows · All Rights Reserved</div>
+    </div>
+  </footer>
+
+  <script>
+    // ===== Nav scroll state =====
+    const nav = document.getElementById('nav');
+    window.addEventListener('scroll', () => {
+      if (window.scrollY > 60) nav.classList.add('scrolled');
+      else nav.classList.remove('scrolled');
+    });
+
+    // ===== Scroll reveal =====
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.12, rootMargin: '0px 0px -60px 0px' });
+
+    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+    // ===== Random glitch trigger on title =====
+    const title = document.querySelector('.hero-title');
+    setInterval(() => {
+      if (Math.random() > 0.7) {
+        title.style.transform = `translate(${(Math.random() - 0.5) * 4}px, ${(Math.random() - 0.5) * 2}px)`;
+        setTimeout(() => { title.style.transform = ''; }, 100);
+      }
+    }, 3000);
+  </script>
+
+</body>
+</html>
